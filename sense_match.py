@@ -8,13 +8,10 @@ import re
 # ==========================================
 # 設定: APIキー読み込み（安全対策版）
 # ==========================================
-# GitHubに公開しても安全なように、ここにはキーを書きません。
-# Streamlit Cloud上では「Secrets」から自動で読み込まれます。
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except:
-    # ローカル（自分のPC）でテストする時だけ、ここにキーを入れても良いですが
-    # GitHubに上げる前には必ず空文字 "" に戻してください！
+    # GitHub公開用には空にしておく
     API_KEY = ""
 
 # --- 2文字の単語リスト（約200語） ---
@@ -117,6 +114,7 @@ def judge_four_char_word(word_a, word_b):
             
         model = genai.GenerativeModel(valid_model_name)
 
+        # プロンプトを修正：詳細な分析レポートを要求
         prompt = f"""
         あなたは「架空言語審議会」の審査員です。
         以下の2つの「新しい四字熟語」を5つの観点で数値化し、比較評価してください。
@@ -140,12 +138,17 @@ def judge_four_char_word(word_a, word_b):
         [END_DATA]
         
         [講評]
-        (ここに150文字以内で、なぜその数値になったのか、勝者はどちらかの解説を記述。
-        見出し記号や点線は使わないこと。)
+        (ここから300〜400文字程度で、以下の構成で理論的に記述してください。
+        見出し記号「#」や区切り線「---」は使用禁止です。)
+
+        1. Aの分析: なぜそのチャート形状になったのか、高得点・低得点の理由を具体的に。
+        2. Bの分析: なぜそのチャート形状になったのか、高得点・低得点の理由を具体的に。
+        3. 結論: 最終的な勝敗の決め手となった理論的根拠。
         """
 
         response = model.generate_content(prompt)
         text = response.text
+        # 安全策：マークダウン記号の強制削除
         text = text.replace("#", "").replace("---", "").replace("===", "")
         return text
 
@@ -218,7 +221,7 @@ def main():
             chart_fig = create_radar_chart(scores_a, scores_b)
             st.plotly_chart(chart_fig, use_container_width=True)
             
-            st.markdown("### 📝 AI審査員の講評")
+            st.markdown("### 📝 AI審査員の分析レポート")
             display_text = re.sub(r"\[DATA\].*?\[END_DATA\]", "", full_result, flags=re.DOTALL)
             st.write(display_text.strip())
 
