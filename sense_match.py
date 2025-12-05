@@ -3,10 +3,11 @@ import random
 import google.generativeai as genai
 import os
 
-# ==========================================
-# 設定: あなたのAPIキー
-# ==========================================
-API_KEY = "AIzaSyDNmz5Hh-Yuj96ztJ1i6MxoXrjcHgreIKk"
+try:
+    API_KEY = st.secrets["GEMINI_API_KEY"]
+except:
+    # GitHubには絶対にキーを書かない！
+    API_KEY = ""
 
 # --- 2文字の単語リスト（素材） ---
 KANJI_WORDS = [
@@ -146,4 +147,5 @@ def main():
         st.rerun()
 
 if __name__ == "__main__":
+
     main()
